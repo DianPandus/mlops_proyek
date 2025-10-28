@@ -1,0 +1,15 @@
+{
+    "model_name": "LogisticRegression + TF-IDF",
+    "accuracy": 0.879108635097493,
+    "dataset_size": 8975,
+    "classes": [
+        "positif",
+        "negatif",
+        "netral"
+    ],
+    "sample_counts": {
+        "positif": 7593,
+        "negatif": 993,
+        "netral": 389
+    }
+}
