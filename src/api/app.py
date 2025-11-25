@@ -1,45 +1,51 @@
 # ===========================================================
-# FASTAPI SENTIMENT SERVICE (FLOQ)
+# FASTAPI SENTIMENT API (AUTO-LOAD BEST MODEL)
 # ===========================================================
+
 from fastapi import FastAPI
 from pydantic import BaseModel
-import joblib
+import joblib, json
 from pathlib import Path
 
-# === [1] INIT APP ===
 app = FastAPI(
     title="Floq Sentiment API",
-    description="Microservice untuk prediksi sentimen ulasan aplikasi Floq",
-    version="1.0.0"
+    description="Prediksi Sentimen Ulasan (Model Otomatis Terbaik)",
+    version="2.0.0"
 )
 
-# === [2] LOAD MODEL & VECTORIZER ===
 ROOT_DIR = Path(__file__).resolve().parents[2]
-MODEL_PATH = ROOT_DIR / "data" / "models" / "sentiment_model.pkl"
-VECTORIZER_PATH = ROOT_DIR / "data" / "models" / "vectorizer.pkl"
+MODELS_DIR = ROOT_DIR / "data" / "models"
 
-model = joblib.load(MODEL_PATH)
-vectorizer = joblib.load(VECTORIZER_PATH)
+# Load metadata
+metadata = json.load(open(MODELS_DIR / "metadata.json"))
+best_model = metadata["best_model"]
 
-# === [3] INPUT SCHEMA ===
+# Load model, vectorizer, and encoder
+model = joblib.load(MODELS_DIR / f"{best_model}_model.pkl")
+vectorizer = joblib.load(MODELS_DIR / "vectorizer.pkl")
+label_encoder = joblib.load(MODELS_DIR / "label_encoder.pkl")
+
+print(f"🚀 Loaded best model → {best_model.upper()}")
+
 class ReviewInput(BaseModel):
     text: str
 
-# === [4] ROUTES ===
 @app.get("/")
-def home():
-    return {"message": "Welcome to Floq Sentiment API 👋"}
-
-@app.post("/predict")
-def predict_sentiment(input_data: ReviewInput):
-    text = input_data.text
-    X = vectorizer.transform([text])
-    prediction = model.predict(X)[0]
-
+def root():
     return {
-        "input": text,
-        "predicted_sentiment": prediction
+        "message": "Sentiment API is running 🚀",
+        "best_model": best_model,
+        "classes": metadata["label_classes"],
     }
 
-# === [5] LOCAL RUN ===
-# Jalankan: uvicorn src.api.app:app --reload
+@app.post("/predict")
+def predict(input_data: ReviewInput):
+    X = vectorizer.transform([input_data.text])
+    pred_num = model.predict(X)[0]
+    pred_label = label_encoder.inverse_transform([pred_num])[0]
+
+    return {
+        "input": input_data.text,
+        "predicted_sentiment": pred_label,
+        "model_used": best_model
+    }

@@ -1,15 +1,14 @@
 {
-    "model_name": "LogisticRegression + TF-IDF",
-    "accuracy": 0.879108635097493,
     "dataset_size": 8975,
-    "classes": [
-        "positif",
+    "label_classes": [
         "negatif",
-        "netral"
+        "netral",
+        "positif"
     ],
-    "sample_counts": {
-        "positif": 7593,
-        "negatif": 993,
-        "netral": 389
-    }
+    "models": {
+        "logreg": 0.8785515320334262,
+        "xgb": 0.8746518105849582,
+        "svm": 0.8785515320334262
+    },
+    "best_model": "logreg"
 }
