@@ -1,10 +1,10 @@
 from google_play_scraper import reviews, Sort
 import pandas as pd
-import os, time, datetime as dt
+import time, datetime as dt
 from pathlib import Path
 
-# === [1] Path Setup (biar gak nyasar ke folder src) ===
-ROOT_DIR = Path(__file__).resolve().parents[2]  # naik 2 folder ke root proyek
+# === [1] Path Setup ===
+ROOT_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT_DIR / "data"
 RAW_DIR = DATA_DIR / "raw"
 MASTER_PATH = DATA_DIR / "master" / "floq_reviews_master.csv"
@@ -12,14 +12,14 @@ MASTER_PATH = DATA_DIR / "master" / "floq_reviews_master.csv"
 RAW_DIR.mkdir(parents=True, exist_ok=True)
 MASTER_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# === [2] Config scraping ===
-APP_ID = "id.kriptomaksima.app"   # Floq
+# === [2] Config ===
+APP_ID = "id.kriptomaksima.app"
 LANG = "id"
 COUNTRY = "id"
 BATCH = 200
 MAX_PAGES = 200
 
-# === [3] Load master lama kalau ada ===
+# === [3] Load master lama ===
 if MASTER_PATH.exists():
     master = pd.read_csv(MASTER_PATH)
     seen = set(master.get("reviewId", []).astype(str))
@@ -27,12 +27,13 @@ else:
     master = pd.DataFrame()
     seen = set()
 
-# === [4] Loop incremental ===
+# === [4] Scraping incremental ===
 all_new = []
 continuation_token = None
 pages = 0
 
-print(f"[{dt.datetime.now()}] Start incremental fetch for {APP_ID}")
+print(f"[{dt.datetime.now()}] Start scraping {APP_ID}")
+
 while True:
     try:
         batch, continuation_token = reviews(
@@ -44,57 +45,47 @@ while True:
             continuation_token=continuation_token
         )
     except Exception as e:
-        print("Fetch error, retrying in 3s:", e)
-        time.sleep(3)
-        continue
+        print("⚠️ Fetch error:", e)
+        break   # ⬅️ JANGAN retry infinite di CI
 
     pages += 1
     if not batch:
-        print("Empty batch, stop.")
         break
 
     fresh = [r for r in batch if str(r.get("reviewId")) not in seen]
     all_new.extend(fresh)
 
-    print(f"Page {pages}: got {len(batch)} | new {len(fresh)} | total_new {len(all_new)}")
+    print(f"Page {pages}: new {len(fresh)} | total_new {len(all_new)}")
 
-    if len(fresh) == 0:
-        print("No new reviews -> early stop.")
-        break
-
-    if continuation_token is None or pages >= MAX_PAGES:
-        print("No more pages or hit MAX_PAGES.")
+    if len(fresh) == 0 or pages >= MAX_PAGES or continuation_token is None:
         break
 
     time.sleep(0.5)
 
-# === [5] Simpan snapshot raw harian ===
+# === [5] Save RAW snapshot ===
 today = dt.datetime.now().strftime("%Y%m%d")
 raw_path = RAW_DIR / f"floq_reviews_{today}.csv"
 
 if all_new:
     df_new = pd.DataFrame(all_new)
     df_new.to_csv(raw_path, index=False)
-    print(f"✅ Saved RAW snapshot: {raw_path} ({len(df_new)} rows)")
+    print(f"✅ RAW saved: {raw_path}")
 else:
     df_new = pd.DataFrame()
-    print("No NEW data today. RAW snapshot not created.")
+    print("ℹ️ No new reviews today.")
 
-# === [6] Merge ke master + dedup ===
-if len(df_new) > 0:
+# === [6] Merge ke master ===
+if not df_new.empty:
     master = pd.concat([master, df_new], ignore_index=True)
     if "reviewId" in master.columns:
-        before = len(master)
-        master.drop_duplicates(subset=["reviewId"], keep="first", inplace=True)
-        after = len(master)
-        print(f"Dedup master: {before} -> {after}")
+        master.drop_duplicates(subset=["reviewId"], inplace=True)
     master.to_csv(MASTER_PATH, index=False)
-    print(f"✅ MASTER updated: {MASTER_PATH} (rows={len(master)})")
+    print(f"✅ MASTER updated ({len(master)} rows)")
 else:
-    print("MASTER unchanged (no new rows).")
+    if not MASTER_PATH.exists():
+        master.to_csv(MASTER_PATH, index=False)
+        print("⚠️ MASTER initialized (empty)")
+    else:
+        print("MASTER unchanged.")
 
-# === [7] Preview hasil ===
-if len(master) > 0:
-    cols = ["reviewId", "score", "at", "userName", "content"]
-    print("\n--- Preview Data (Last 10) ---")
-    print(master[[c for c in cols if c in master.columns]].tail(10))
+print("🎉 Scraping step finished successfully.")

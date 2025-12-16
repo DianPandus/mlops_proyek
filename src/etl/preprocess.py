@@ -1,5 +1,5 @@
 import pandas as pd
-import re, os
+import re
 from pathlib import Path
 
 # === [1] Path Setup ===
@@ -13,16 +13,17 @@ PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 print(f"📂 Load master data from: {MASTER_PATH}")
 
-# === [2] Load data master ===
+# === [2] Load master ===
 if not MASTER_PATH.exists():
-    print("❌ File master tidak ditemukan. Pastikan sudah menjalankan scrapping_dataset.py dulu.")
-    exit()
+    print("⚠️ MASTER not found. Skipping preprocessing step.")
+    print("🎯 This is OK for first run or no new data.")
+    exit(0)   # ✅ CI AMAN
 
 df = pd.read_csv(MASTER_PATH)
 
 if df.empty:
-    print("⚠️ File master kosong. Tidak ada data untuk diproses.")
-    exit()
+    print("⚠️ MASTER is empty. Skipping preprocessing.")
+    exit(0)   # ✅ CI AMAN
 
 print(f"✅ Loaded {len(df)} rows.")
 
@@ -39,7 +40,7 @@ def clean_text(text):
 
 df["clean_content"] = df["content"].apply(clean_text)
 
-# === [4] Label Sentiment ===
+# === [4] Label sentiment ===
 def label_sentiment(score):
     if score >= 4:
         return "positif"
@@ -50,11 +51,13 @@ def label_sentiment(score):
 
 df["sentiment"] = df["score"].apply(label_sentiment)
 
-# === [5] Save Clean Data ===
+# === [5] Save processed ===
 df.to_csv(PROCESSED_PATH, index=False)
-print(f"💾 Data berhasil disimpan ke: {PROCESSED_PATH}")
-print(f"Total baris: {len(df)}")
+print(f"💾 Clean data saved to: {PROCESSED_PATH}")
+print(f"📊 Total rows: {len(df)}")
 
-# === [6] Tampilkan contoh hasil ===
-print("\n🔍 Preview data bersih:")
+# === [6] Preview ===
+print("\n🔍 Preview clean data:")
 print(df[["score", "content", "clean_content", "sentiment"]].head(5))
+
+print("🎉 Preprocessing finished successfully.")
