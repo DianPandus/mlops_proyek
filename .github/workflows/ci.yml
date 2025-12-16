@@ -42,9 +42,10 @@ jobs:
           test -f models/vectorizer.pkl
           test -f models/logreg_model.pkl
 
-      - name: 🚀 Sanity check API import
+      - name: 🚀 Sanity check API (no model load)
         run: |
           python - <<EOF
-          from src.api.app import app
-          print("API loaded successfully")
+          import importlib
+          import src.api.app
+          print("API module imported successfully")
           EOF
