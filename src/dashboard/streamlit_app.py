@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 API_URL = "http://127.0.0.1:8000/predict"
-META_PATH = Path("data/models/metadata.json")
+META_PATH = Path("models/metadata.json")
 DATA_PATH = Path("data/processed/floq_reviews_clean.csv")
 
 # =========================================================

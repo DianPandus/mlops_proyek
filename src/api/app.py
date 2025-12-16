@@ -14,7 +14,7 @@ app = FastAPI(
 )
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-MODELS_DIR = ROOT_DIR / "data" / "models"
+MODELS_DIR = ROOT_DIR / "models"
 
 # Load metadata
 metadata = json.load(open(MODELS_DIR / "metadata.json"))
