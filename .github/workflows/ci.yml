@@ -30,9 +30,9 @@ jobs:
 
       - name: ✅ Check model artifacts
         run: |
-          test -f data/models/best_model.pkl
-          test -f data/models/vectorizer.pkl
-          test -f data/models/metadata.json
+          test -f models/best_model.pkl
+          test -f models/vectorizer.pkl
+          test -f models/metadata.json
 
       - name: 🚀 Sanity check API import
         run: |

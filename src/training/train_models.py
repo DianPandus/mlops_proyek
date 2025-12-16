@@ -157,3 +157,13 @@ for model, acc in results.items():
 print(f"\n🔥 BEST MODEL → {metadata['model_name'].upper()}")
 print(f"💾 Metadata saved to {META_PATH}")
 print("🎉 Training pipeline completed successfully!")
+
+BEST_MODEL_PATH = MODELS_DIR / "best_model.pkl"
+
+if metadata["model_name"] == "logreg":
+    joblib.dump(logreg, BEST_MODEL_PATH)
+elif metadata["model_name"] == "xgb":
+    joblib.dump(xgb_model, BEST_MODEL_PATH)
+elif metadata["model_name"] == "svm":
+    joblib.dump(svm_model, BEST_MODEL_PATH)
+
