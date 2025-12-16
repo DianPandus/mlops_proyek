@@ -13,7 +13,9 @@ app = FastAPI(
     version="2.0.0"
 )
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
+ROOT_DIR = Path(__file__).resolve()
+while not (ROOT_DIR / "models").exists():
+    ROOT_DIR = ROOT_DIR.parent
 MODELS_DIR = ROOT_DIR / "models"
 
 # Load metadata
