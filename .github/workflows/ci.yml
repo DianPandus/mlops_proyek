@@ -1,4 +1,4 @@
-name: MLOps CI Pipeline
+name: MLOps CI & Scheduled Retraining
 
 on:
   push:
@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: ["main"]
 
+  schedule:
+    # Setiap Minggu Senin jam 02:00 WIB (19:00 UTC hari Minggu)
+    - cron: "0 19 * * 0"
+
 jobs:
-  build-and-train:
+  build-train:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,17 +28,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🧠 Run model training
+      - name: 🕷️ Scraping new data
+        run: |
+          python src/scrapping/scrapping_dataset.py
+
+      - name: 🔄 ETL preprocessing
+        run: |
+          python src/etl/preprocess.py
+
+      - name: 🧠 Retrain models
         run: |
           python src/training/train_models.py
 
-      - name: ✅ Check model artifacts
+      - name: 📦 Validate model artifacts
         run: |
-          test -f models/best_model.pkl
+          test -f models/logreg_model.pkl
           test -f models/vectorizer.pkl
           test -f models/metadata.json
 
-      - name: 🚀 Sanity check API import
+      - name: 🚀 Sanity check API
         run: |
           python - <<EOF
           from src.api.app import app
