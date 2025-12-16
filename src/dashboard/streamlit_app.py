@@ -22,8 +22,15 @@ DATA_PATH = Path("data/processed/floq_reviews_clean.csv")
 # =========================================================
 # LOAD METADATA
 # =========================================================
+from pathlib import Path
+import json
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+META_PATH = ROOT_DIR / "models" / "metadata.json"
+
 with open(META_PATH) as f:
     metadata = json.load(f)
+
 
 # =========================================================
 # HEADER

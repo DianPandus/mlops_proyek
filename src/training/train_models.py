@@ -1,28 +1,30 @@
 # ===========================================================
 #  TRAINING MULTI-MODEL SENTIMENT ANALYSIS
 #  Models: Logistic Regression, XGBoost, SVM
-#  FLOQ MLOps Project - Final Version
+#  FLOQ MLOps Project - Final Version (HARDENED)
 # ===========================================================
 
 import pandas as pd
 import joblib
 import json
 from pathlib import Path
+from datetime import datetime
+
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
-import xgboost as xgb
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report, accuracy_score
+
+import xgboost as xgb
 
 # === [1] Path Setup ===
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DATA_PATH = ROOT_DIR / "data" / "processed" / "floq_reviews_clean.csv"
-MODELS_DIR = ROOT_DIR / "data" / "models"
+MODELS_DIR = ROOT_DIR / "models"   # ⬅️ DISAMAKAN DENGAN DASHBOARD
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Model paths
 LOGREG_PATH = MODELS_DIR / "logreg_model.pkl"
 XGB_PATH = MODELS_DIR / "xgb_model.pkl"
 SVM_PATH = MODELS_DIR / "svm_model.pkl"
@@ -32,8 +34,9 @@ META_PATH = MODELS_DIR / "metadata.json"
 
 # === [2] Load Dataset ===
 df = pd.read_csv(DATA_PATH)
-df.dropna(subset=["clean_content"], inplace=True)
+df.dropna(subset=["clean_content", "sentiment"], inplace=True)
 df = df[df["clean_content"].str.strip() != ""]
+sample_counts = df["sentiment"].value_counts().to_dict()
 print(f"📊 Dataset loaded: {len(df)} valid reviews")
 
 # === [3] Encode Labels ===
@@ -43,72 +46,114 @@ joblib.dump(label_encoder, ENCODER_PATH)
 
 X = df["clean_content"]
 
-# === [4] Data Split ===
+# === [4] Train-Test Split ===
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
 )
 
 # === [5] TF-IDF Vectorization ===
-tfidf = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
+tfidf = TfidfVectorizer(
+    max_features=5000,
+    ngram_range=(1, 2),
+    min_df=2
+)
 X_train_vec = tfidf.fit_transform(X_train)
 X_test_vec = tfidf.transform(X_test)
 joblib.dump(tfidf, TFIDF_PATH)
 
-# === [6] Train Logistic Regression ===
-logreg = LogisticRegression(max_iter=1000, solver="lbfgs")
+# ===========================================================
+# MODEL TRAINING
+# ===========================================================
+
+results = {}
+
+# === [6] Logistic Regression ===
+logreg = LogisticRegression(max_iter=1000)
 logreg.fit(X_train_vec, y_train)
-logreg_pred = logreg.predict(X_test_vec)
-logreg_acc = accuracy_score(y_test, logreg_pred)
-print(f"\n=== Logistic Regression ===\nAccuracy: {logreg_acc:.4f}")
-print(classification_report(y_test, logreg_pred, target_names=label_encoder.classes_))
+pred = logreg.predict(X_test_vec)
+acc = accuracy_score(y_test, pred)
+results["logreg"] = acc
+
+print(f"\n=== Logistic Regression ===")
+print(f"Accuracy: {acc:.4f}")
+print(classification_report(y_test, pred, target_names=label_encoder.classes_))
 joblib.dump(logreg, LOGREG_PATH)
 
-# === [7] Train XGBoost ===
+# === [7] XGBoost ===
 xgb_model = xgb.XGBClassifier(
+    objective="multi:softmax",
+    num_class=len(label_encoder.classes_),
     eval_metric="mlogloss",
     max_depth=6,
     learning_rate=0.1,
     n_estimators=200,
     subsample=0.8,
-    colsample_bytree=0.8
+    colsample_bytree=0.8,
+    random_state=42
 )
+
 xgb_model.fit(X_train_vec, y_train)
-xgb_pred = xgb_model.predict(X_test_vec)
-xgb_acc = accuracy_score(y_test, xgb_pred)
-print(f"\n=== XGBoost ===\nAccuracy: {xgb_acc:.4f}")
-print(classification_report(y_test, xgb_pred, target_names=label_encoder.classes_))
+pred = xgb_model.predict(X_test_vec)
+acc = accuracy_score(y_test, pred)
+results["xgb"] = acc
+
+print(f"\n=== XGBoost ===")
+print(f"Accuracy: {acc:.4f}")
+print(classification_report(y_test, pred, target_names=label_encoder.classes_))
 joblib.dump(xgb_model, XGB_PATH)
 
-# === [8] Train SVM ===
+# === [8] SVM ===
 svm_model = LinearSVC()
 svm_model.fit(X_train_vec, y_train)
-svm_pred = svm_model.predict(X_test_vec)
-svm_acc = accuracy_score(y_test, svm_pred)
-print(f"\n=== SVM (LinearSVC) ===\nAccuracy: {svm_acc:.4f}")
-print(classification_report(y_test, svm_pred, target_names=label_encoder.classes_))
+pred = svm_model.predict(X_test_vec)
+acc = accuracy_score(y_test, pred)
+results["svm"] = acc
+
+print(f"\n=== SVM (LinearSVC) ===")
+print(f"Accuracy: {acc:.4f}")
+print(classification_report(y_test, pred, target_names=label_encoder.classes_))
 joblib.dump(svm_model, SVM_PATH)
+
+# === [8.5] Determine Best Model (BASED ON ACCURACY) ===
+best_model_name, best_acc = max(results.items(), key=lambda x: x[1])
+
+
+# ===========================================================
+# METADATA (DASHBOARD + API FRIENDLY)
+# ===========================================================
+
+best_model = max(results.items(), key=lambda x: x[1])
 
 # === [9] Save Metadata ===
 metadata = {
-    "dataset_size": len(df),
-    "label_classes": label_encoder.classes_.tolist(),
-    "models": {
-        "logreg": float(logreg_acc),
-        "xgb": float(xgb_acc),
-        "svm": float(svm_acc)
+    "model_name": best_model_name,
+    "accuracy": float(best_acc),
+    "all_models": {
+    "logreg": float(results["logreg"]),
+    "xgb": float(results["xgb"]),
+    "svm": float(results["svm"])
     },
-    "best_model": max(
-        [("logreg", logreg_acc), ("xgb", xgb_acc), ("svm", svm_acc)],
-        key=lambda x: x[1]
-    )[0]
+    "vectorizer": "tfidf",
+    "num_features": 5000,
+    "dataset_size": len(df),
+    "classes": label_encoder.classes_.tolist(),
+    "sample_counts": sample_counts,
+    "trained_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 }
 
-json.dump(metadata, open(META_PATH, "w"), indent=4)
+with open(META_PATH, "w") as f:
+    json.dump(metadata, f, indent=4)
 
+
+# === [10] Final Log ===
 print("\n📌 FINAL ACCURACY")
-for model, acc in metadata["models"].items():
+for model, acc in results.items():
     print(f" - {model.upper()} → {acc:.4f}")
 
-print(f"\n🔥 BEST MODEL SELECTED → {metadata['best_model'].upper()}")
-print(f"💾 Metadata saved: {META_PATH}")
-print("🎉 Training pipeline complete!")
+print(f"\n🔥 BEST MODEL → {metadata['model_name'].upper()}")
+print(f"💾 Metadata saved to {META_PATH}")
+print("🎉 Training pipeline completed successfully!")
