@@ -1,63 +1,18 @@
-# ==============================
-# Core Data Handling
-# ==============================
+# Core Data & Dashboard
 pandas==2.2.2
 numpy==1.26.4
+streamlit==1.39.0
 
-# ==============================
-# Scraping
-# ==============================
-google-play-scraper==1.2.4
-beautifulsoup4==4.12.3
-requests==2.32.3
-
-# ==============================
-# Machine Learning & NLP
-# ==============================
-scikit-learn==1.5.2
-xgboost==2.1.1
-joblib==1.4.2
-nltk==3.9.1
-
-# ==============================
-# Text Processing / Visualization
-# ==============================
+# Visualization (Penyebab utama error)
 matplotlib==3.9.2
 seaborn==0.13.2
 wordcloud==1.9.3
 
-# ==============================
-# Dashboard
-# ==============================
-streamlit==1.39.0
+# Machine Learning & NLP (Hanya yang diperlukan load model)
+scikit-learn==1.5.2
+joblib==1.4.2
+nltk==3.9.1
 
-# ==============================
-# Deep Learning (optional future)
-# ==============================
-torch==2.4.1
-transformers==4.44.2
-
-# ==============================
 # Utilities
-# ==============================
-pyyaml==6.0.2
-tqdm==4.66.5
 python-dotenv==1.0.1
-
-# ==============================
-# Experiment Tracking / MLOps
-# ==============================
-mlflow==2.17.0
-dvc==3.51.1
-
-# ==============================
-# API / Model Serving
-# ==============================
-fastapi==0.120.1
-uvicorn==0.38.0
-pydantic==2.12.3
-
-# ==============================
-# Validation / Serialization
-# ==============================
-jsonschema==4.23.0
+pyyaml==6.0.2
