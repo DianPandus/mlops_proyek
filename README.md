@@ -1,200 +1,100 @@
-# 🚀 FLOQ Sentiment Analysis — MLOps Project (FastAPI + Docker)
 
-Proyek ini merupakan implementasi **microservice Machine Learning berbasis Docker** yang bertujuan untuk melakukan analisis sentimen pada ulasan aplikasi **FLOQ** dari Google Playstore.  
-Pipeline ini mencakup seluruh tahapan MLOps — mulai dari _data collection_, _ETL_, _model training_, _serving API_, hingga _containerization_.
 
----
+# 🚀 Floq: MLOps Sentiment Analysis Pipeline
 
-## 🧩 1. Project Structure
+Floq adalah proyek MLOps *end-to-end* yang dirancang untuk melakukan penarikan data ulasan (scraping), pemrosesan data (ETL), pelatihan model machine learning secara otomatis, hingga penyajian data melalui Dashboard interaktif dan API.
 
-```
+## 🌐 Live Demo & Registry
 
-MLOPS/
-├── data/
-│ ├── master/ # hasil scraping mentah
-│ ├── processed/ # data setelah preprocessing
-│ └── models/ # model + vectorizer hasil training
-│
-├── src/
-│ ├── scrapping/
-│ │ └── scrapping_dataset.py
-│ ├── etl/
-│ │ └── preprocess.py
-│ ├── training/
-│ │ └── train_sentiment.py
-│ └── api/
-│ └── app.py # FastAPI endpoint untuk prediksi
-│
-├── requirements.txt
-├── Dockerfile
-└── README.md
-
-```
+* **Dashboard:** [floqdashboard.streamlit.app](https://floqdashboard.streamlit.app/)
+* **Docker Image:** `dianpandus/floq:latest` (FastAPI)
 
 ---
 
-## ⚙️ 2. Setup Environment
+## 🏗️ Arsitektur Proyek
 
-Pastikan kamu sudah menginstall **Python 3.11** dan **Docker Desktop**.
+Proyek ini mengimplementasikan siklus hidup MLOps yang otomatis:
 
-### 📦 Install dependency
+1. **Data Ingestion:** Scraping ulasan aplikasi secara berkala dari Google Play Store.
+2. **ETL Pipeline:** Pembersihan teks dan transformasi data menggunakan Python dan Pandas.
+3. **Automated Training:** Melatih berbagai model (XGBoost, Logistic Regression, SVM) untuk menemukan performa terbaik.
+4. **CI/CD Pipeline:** Menggunakan GitHub Actions untuk menjalankan otomatisasi setiap minggu atau setiap kali ada perubahan kode.
+5. **Deployment:**
+* **Dashboard:** Otomatis dideploy ke Streamlit Cloud.
+* **API:** Containerized menggunakan Docker untuk serving model.
 
-```bash
-pip install -r requirements.txt
-```
 
----
-
-## 📊 3. Pipeline Workflow
-
-### 🕵️‍♂️ (1) Scraping Data Review
-
-Mengambil ulasan dari aplikasi FLOQ di Play Store.
-
-```bash
-cd src/scrapping
-python scrapping_dataset.py
-```
-
-📂 Hasil: `data/master/floq_reviews_master.csv`
 
 ---
 
-### 🧹 (2) ETL & Preprocessing
+## 🛠️ Tech Stack
 
-Membersihkan data hasil scraping, menghapus duplikat, menghilangkan karakter noise, dan menyimpan versi bersih.
-
-```bash
-cd ../etl
-python preprocess.py
-```
-
-📂 Hasil: `data/processed/floq_reviews_clean.csv`
+* **Language:** Python 3.11
+* **Libraries:** Scikit-learn, XGBoost, Pandas, NLTK, WordCloud, Plotly.
+* **Dashboard:** Streamlit.
+* **API:** FastAPI & Uvicorn.
+* **MLOps & Tools:** GitHub Actions (CI/CD), Docker, DVC, MLflow.
 
 ---
 
-### 🧠 (3) Model Training
-
-Melatih model **TF-IDF + Logistic Regression** untuk klasifikasi sentimen (positif, netral, negatif).
-
-```bash
-cd ../training
-python train_sentiment.py
-```
-
-📂 Hasil:
-
-- `data/models/sentiment_model.pkl`
-- `data/models/vectorizer.pkl`
-- `data/models/metadata.json`
-
----
-
-### 🌐 (4) Serving API (FastAPI)
-
-Menjalankan layanan API untuk melakukan prediksi sentimen berbasis teks.
-
-```bash
-cd ../api
-python -m uvicorn src.api.app:app --reload
-```
-
-Akses dokumentasi Swagger UI:
-👉 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
-Contoh input di `/predict`:
-
-```json
-{ "text": "Aplikasi Floq sangat membantu dan mudah digunakan!" }
-```
-
-Response:
-
-```json
-{
-  "input": "Aplikasi Floq sangat membantu dan mudah digunakan!",
-  "predicted_sentiment": "positif"
-}
-```
-
----
-
-## 🐳 (5) Deployment with Docker
-
-### 🔹 Build Docker Image
-
-Pastikan kamu berada di **root folder (MLOPS/)**
-Jalankan perintah berikut:
-
-```bash
-docker build -t floq-sentiment-api .
-```
-
-### 🔹 Jalankan Container
-
-```bash
-docker run -d -p 8000:8000 --name floq-api floq-sentiment-api
-```
-
-📍 API berjalan di:
-[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
-### 🔹 Lihat container yang berjalan
-
-```bash
-docker ps
-```
-
-### 🔹 Stop container (jika sudah selesai)
-
-```bash
-docker stop floq-api
-docker rm floq-api
-```
-
----
-
-## 🧠 Model Overview
-
-| Komponen          | Algoritma                      | Akurasi |
-| ----------------- | ------------------------------ | ------- |
-| Model             | Logistic Regression            | ± 0.88  |
-| Feature Extractor | TF-IDF (1-2 ngram, 5000 fitur) | -       |
-| Label             | Positif, Netral, Negatif       | -       |
-
----
-
-## 📦 Tech Stack
-
-- **Python 3.11**
-- **FastAPI + Uvicorn**
-- **scikit-learn**
-- **pandas, numpy, nltk**
-- **Docker**
-- _(Opsional)_ MLflow & DVC untuk tracking pipeline
-
----
-
-## 🧱 Dockerfile Overview
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-EXPOSE 8000
-CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
----
-
-## 🧩 Flow Summary
+## 📁 Struktur Direktori
 
 ```text
-[Scraping] → [ETL Preprocessing] → [Model Training] → [FastAPI Serving] → [Dockerized API]
+.
+├── .github/workflows/     # Konfigurasi GitHub Actions (CI/CD)
+├── data/
+│   ├── raw/               # Data mentah hasil scraping
+│   └── processed/         # Data bersih siap training
+├── docker/
+│   ├── Dockerfile.api     # Docker untuk FastAPI
+│   └── Dockerfile.dashboard # Docker untuk Dashboard
+├── models/                # Artefak model (.pkl) dan metadata
+├── src/
+│   ├── scrapping/         # Script penarikan data
+│   ├── etl/               # Script preprocessing data
+│   ├── training/          # Script pelatihan model
+│   ├── api/               # Source code FastAPI
+│   └── dashboard/         # Source code Streamlit
+├── packages.txt           # Dependensi sistem (Linux)
+└── requirements.txt       # Dependensi Python
+
 ```
+
+---
+
+## ⚙️ Instalasi Lokal
+
+1. **Clone Repository:**
+```bash
+git clone https://github.com/DianPandus/mlops_proyek.git
+cd mlops_proyek
+
+```
+
+
+2. **Install Dependensi:**
+```bash
+pip install -r requirements.txt
+
+```
+
+
+3. **Jalankan Dashboard:**
+```bash
+streamlit run src/dashboard/streamlit_app.py
+
+```
+
+
+
+---
+
+## 🤖 Otomatisasi CI/CD
+
+Workflow `.github/workflows/ci.yml` menangani:
+
+* **Scheduler:** Scraping dan retraining otomatis setiap hari Senin.
+* **Write Permission:** Mengunggah kembali data dan model terbaru ke GitHub untuk memperbarui Dashboard secara *real-time*.
+* **Docker Build:** Memperbarui image `dianpandus/floq:latest` di Docker Hub setiap kali ada push ke branch `main`.
+
+---
