@@ -1,20 +1,23 @@
 {
-  "model_name": "logreg",
-  "best_model": "logreg",
-  "accuracy": 0.877562028047465,
-  "all_models": {
-    "logreg": 0.877562028047465,
-    "xgb": 0.8770226537216829,
-    "svm": 0.8732470334412082
-  },
-  "vectorizer": "tfidf",
-  "num_features": 5000,
-  "dataset_size": 9267,
-  "classes": ["negatif", "netral", "positif"],
-  "sample_counts": {
-    "positif": 7837,
-    "negatif": 1026,
-    "netral": 404
-  },
-  "trained_at": "2025-12-18 09:43:12"
+    "model_name": "svm",
+    "accuracy": 0.8819587628865979,
+    "all_models": {
+        "logreg": 0.8778350515463917,
+        "xgb": 0.8768041237113402,
+        "svm": 0.8819587628865979
+    },
+    "vectorizer": "tfidf",
+    "num_features": 5000,
+    "dataset_size": 9699,
+    "classes": [
+        "negatif",
+        "netral",
+        "positif"
+    ],
+    "sample_counts": {
+        "positif": 8176,
+        "negatif": 1091,
+        "netral": 432
+    },
+    "trained_at": "2026-06-11 12:59:33"
 }
