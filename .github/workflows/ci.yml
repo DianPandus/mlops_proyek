@@ -5,11 +5,14 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 1 * * *" # 08:00 WIB
+
+permissions:
+  contents: write
 
 jobs:
-  # =========================================================
-  # CI: Scraping → ETL → Training → Sanity Check
-  # =========================================================
   ci:
     runs-on: ubuntu-latest
 
@@ -56,13 +59,10 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/processed/*.csv models/*.pkl
+          git add data/raw/*.csv data/processed/*.csv models/*.pkl models/metadata.json
           git commit -m "Automated data & model update: $(date)" || echo "No changes to commit"
           git push
 
-  # =========================================================
-  # CD: Build & Push Docker Image (API)
-  # =========================================================
   cd:
     runs-on: ubuntu-latest
     needs: ci
