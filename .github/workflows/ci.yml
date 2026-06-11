@@ -7,7 +7,7 @@ on:
     branches: ["main"]
   workflow_dispatch:
   schedule:
-    - cron: "0 1 * * *" # 08:00 WIB
+    - cron: "0 1 * * 1" # 08:00 WIB
 
 permissions:
   contents: write
