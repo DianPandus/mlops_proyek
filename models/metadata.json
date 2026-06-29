@@ -1,23 +1,23 @@
 {
     "model_name": "logreg",
-    "accuracy": 0.8809278350515464,
+    "accuracy": 0.8775720164609053,
     "all_models": {
-        "logreg": 0.8809278350515464,
-        "xgb": 0.8762886597938144,
-        "svm": 0.877319587628866
+        "logreg": 0.8775720164609053,
+        "xgb": 0.8713991769547325,
+        "svm": 0.8683127572016461
     },
     "vectorizer": "tfidf",
     "num_features": 5000,
-    "dataset_size": 9700,
+    "dataset_size": 9719,
     "classes": [
         "negatif",
         "netral",
         "positif"
     ],
     "sample_counts": {
-        "positif": 8177,
-        "negatif": 1092,
-        "netral": 431
+        "positif": 8186,
+        "negatif": 1100,
+        "netral": 433
     },
-    "trained_at": "2026-06-22 06:33:55"
+    "trained_at": "2026-06-29 05:55:35"
 }
