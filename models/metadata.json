@@ -1,23 +1,23 @@
 {
     "model_name": "svm",
-    "accuracy": 0.8766133195663397,
+    "accuracy": 0.8751289989680082,
     "all_models": {
-        "logreg": 0.876097057305111,
-        "xgb": 0.8688693856479092,
-        "svm": 0.8766133195663397
+        "logreg": 0.8735810113519091,
+        "xgb": 0.8653250773993808,
+        "svm": 0.8751289989680082
     },
     "vectorizer": "tfidf",
     "num_features": 5000,
-    "dataset_size": 9682,
+    "dataset_size": 9686,
     "classes": [
         "negatif",
         "netral",
         "positif"
     ],
     "sample_counts": {
-        "positif": 8164,
-        "negatif": 1090,
+        "positif": 8166,
+        "negatif": 1092,
         "netral": 428
     },
-    "trained_at": "2026-07-27 04:41:16"
+    "trained_at": "2026-08-03 04:34:36"
 }
